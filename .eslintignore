@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+api-docs/
+
+index.*
+.eslintrc.js
+commitlint.config.js
