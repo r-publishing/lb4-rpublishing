@@ -1,7 +1,7 @@
 import {Provider} from '@loopback/core';
 const rchainToolkit = require("rchain-toolkit");
 import { ec } from 'elliptic';
-const { masterTerm, deployBoxTerm, deployTerm, createPursesTerm } = require('rchain-token');
+const { masterTerm, deployBoxTerm, deployTerm, createPursesTerm, readBoxTerm } = require('rchain-token');
 
 interface Demo {
     masterRegistryUri: string,
@@ -452,7 +452,7 @@ const validAfterBlockNumber = async (httpUrlReadOnly: string) => {
           price: price,
           boxId: boxId,
           quantity: quantity,
-          fees: []
+          //fees: []
         },
       },
       data: {
@@ -517,7 +517,23 @@ const validAfterBlockNumber = async (httpUrlReadOnly: string) => {
     }
   };
   
+  const checkPursesInBox = async (masterRegistryUri: string, boxId: string, contractId: string, ids: Array<string>) => {
+      const term0 = readBoxTerm({ masterRegistryUri: masterRegistryUri, boxId: boxId});
+      const result0 = await rchainToolkit.http.exploreDeploy(READ_ONLY_HOST, {
+        term: term0,
+      });
+    
+      const allData = rchainToolkit.utils.rhoValToJs(JSON.parse(result0).expr[0]);
 
+      if (
+        allData.purses[contractId].filter((bid: string) => !!ids.find((id) => id === bid))
+          .length !== ids.length
+      ) {
+        console.log(JSON.stringify(allData.purses[contractId]));
+        throw new Error('checkPursesInBox invalid purses');
+      }
+      return null;
+  }
 
 
 export class RChainProvider implements Provider<Demo> {
@@ -525,10 +541,24 @@ export class RChainProvider implements Provider<Demo> {
 
         console.info("prepareDemo()");
     
-        const publisherPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex')
-        const attestorPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
-        const buyerPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
-        const buyer2PrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
+        let publisherPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex')
+        let attestorPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
+        let buyerPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
+        let buyer2PrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
+
+        while (publisherPrivKey.length < 64) {
+          publisherPrivKey = "0" + publisherPrivKey;
+        }
+        while (attestorPrivKey.length < 64) {
+          attestorPrivKey = "0" + attestorPrivKey;
+        }
+        while (buyerPrivKey.length < 64) {
+          buyerPrivKey = "0" + buyerPrivKey;
+        }
+        while (buyer2PrivKey.length < 64) {
+          buyer2PrivKey = "0" + buyer2PrivKey;
+        }
+         
       
         const publisherPubKey = rchainToolkit.utils.publicKeyFromPrivateKey(publisherPrivKey);
         const attestorPubKey = rchainToolkit.utils.publicKeyFromPrivateKey(attestorPrivKey);
@@ -570,6 +600,13 @@ export class RChainProvider implements Provider<Demo> {
       
 
         await createPurse(publisherPrivKey, masterRegistryUri, "store", "publisher", "0", "0", 100000000, 1);
+
+        await checkPursesInBox(
+          masterRegistryUri,
+          'publisher',
+          'store',
+          ['0']
+        );
 
 
       return {
