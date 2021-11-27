@@ -538,7 +538,7 @@ const validAfterBlockNumber = async (httpUrlReadOnly: string) => {
 
 export class RChainProvider implements Provider<Demo> {
     async value() {
-
+      try {
         console.info("prepareDemo()");
     
         let publisherPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex')
@@ -609,12 +609,22 @@ export class RChainProvider implements Provider<Demo> {
         );
 
 
-      return {
-        masterRegistryUri: masterRegistryUri,
-        publisherPrivKey: publisherPrivKey,
-        attestorPrivKey: attestorPrivKey,
-        alicePrivKey: buyerPrivKey,
-        bobPrivKey: buyer2PrivKey
-      } as Demo;
+        return {
+          masterRegistryUri: masterRegistryUri,
+          publisherPrivKey: publisherPrivKey,
+          attestorPrivKey: attestorPrivKey,
+          alicePrivKey: buyerPrivKey,
+          bobPrivKey: buyer2PrivKey
+        } as Demo;
+      } catch (err) {
+        console.error(err);
+        return {
+          masterRegistryUri: "",
+          publisherPrivKey: "",
+          attestorPrivKey: "",
+          alicePrivKey: "",
+          bobPrivKey: ""
+        } as Demo;
+      }
     }
   }
