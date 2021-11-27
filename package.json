@@ -59,7 +59,7 @@
         "@loopback/repository": "^3.6.0",
         "@loopback/testlab": "^3.4.0",
         "@loopback/tslint-config": "^2.1.0",
-        "@types/elliptic": "^6.4.13",
+        "@types/elliptic": "^6.4.14",
         "@types/node": "^10.17.59",
         "@typescript-eslint/eslint-plugin": "^4.22.0",
         "@typescript-eslint/parser": "^4.22.0",
