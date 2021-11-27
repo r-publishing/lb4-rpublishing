@@ -363,59 +363,71 @@ const checkPursesInBox = async (masterRegistryUri, boxId, contractId, ids) => {
 };
 class RChainProvider {
     async value() {
-        console.info("prepareDemo()");
-        let publisherPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
-        let attestorPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
-        let buyerPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
-        let buyer2PrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
-        while (publisherPrivKey.length < 64) {
-            publisherPrivKey = "0" + publisherPrivKey;
+        try {
+            console.info("prepareDemo()");
+            let publisherPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
+            let attestorPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
+            let buyerPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
+            let buyer2PrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
+            while (publisherPrivKey.length < 64) {
+                publisherPrivKey = "0" + publisherPrivKey;
+            }
+            while (attestorPrivKey.length < 64) {
+                attestorPrivKey = "0" + attestorPrivKey;
+            }
+            while (buyerPrivKey.length < 64) {
+                buyerPrivKey = "0" + buyerPrivKey;
+            }
+            while (buyer2PrivKey.length < 64) {
+                buyer2PrivKey = "0" + buyer2PrivKey;
+            }
+            const publisherPubKey = rchainToolkit.utils.publicKeyFromPrivateKey(publisherPrivKey);
+            const attestorPubKey = rchainToolkit.utils.publicKeyFromPrivateKey(attestorPrivKey);
+            const buyerPubKey = rchainToolkit.utils.publicKeyFromPrivateKey(buyerPrivKey);
+            const buyer2PubKey = rchainToolkit.utils.publicKeyFromPrivateKey(buyer2PrivKey);
+            const publisherRevAddr = rchainToolkit.utils.revAddressFromPublicKey(publisherPubKey);
+            const attestorRevAddr = rchainToolkit.utils.revAddressFromPublicKey(attestorPubKey);
+            const buyerRevAddr = rchainToolkit.utils.revAddressFromPublicKey(buyerPubKey);
+            const buyer2RevAddr = rchainToolkit.utils.revAddressFromPublicKey(buyer2PubKey);
+            console.info("publisher: " + publisherRevAddr);
+            console.info("attestor: " + attestorRevAddr);
+            console.info("buyer: " + buyerRevAddr);
+            console.info("buye2r: " + buyer2RevAddr);
+            const fundingPromise1 = fundWallet(escrowRevAddr, publisherRevAddr, 10000000000);
+            const fundingPromise2 = fundWallet(escrowRevAddr, attestorRevAddr, 10000000000);
+            const fundingPromise3 = fundWallet(escrowRevAddr, buyerRevAddr, 10000000000);
+            const fundingPromise4 = fundWallet(escrowRevAddr, buyer2RevAddr, 10000000000);
+            await Promise.all([fundingPromise1, fundingPromise2, fundingPromise3, fundingPromise4]);
+            const masterRegistryUri = await deployMaster(publisherPrivKey);
+            console.info("masterRegistryUri: " + masterRegistryUri);
+            const boxPromise1 = deployBox(publisherPrivKey, publisherPubKey, masterRegistryUri, "publisher");
+            const boxPromise2 = deployBox(attestorPrivKey, attestorPubKey, masterRegistryUri, "attestor");
+            const boxPromise3 = deployBox(buyerPrivKey, buyerPubKey, masterRegistryUri, "buyer");
+            const boxPromise4 = deployBox(buyer2PrivKey, buyer2PubKey, masterRegistryUri, "buyer2");
+            await Promise.all([boxPromise1, boxPromise2, boxPromise3, boxPromise4]);
+            const deployPromise1 = deployContract(publisherPrivKey, masterRegistryUri, false, "store", "publisher", undefined);
+            const deployPromise2 = deployContract(publisherPrivKey, masterRegistryUri, false, "public_store", "publisher", undefined);
+            await Promise.all([deployPromise1, deployPromise2]);
+            await createPurse(publisherPrivKey, masterRegistryUri, "store", "publisher", "0", "0", 100000000, 1);
+            await checkPursesInBox(masterRegistryUri, 'publisher', 'store', ['0']);
+            return {
+                masterRegistryUri: masterRegistryUri,
+                publisherPrivKey: publisherPrivKey,
+                attestorPrivKey: attestorPrivKey,
+                alicePrivKey: buyerPrivKey,
+                bobPrivKey: buyer2PrivKey
+            };
         }
-        while (attestorPrivKey.length < 64) {
-            attestorPrivKey = "0" + attestorPrivKey;
+        catch (err) {
+            console.error(err);
+            return {
+                masterRegistryUri: "",
+                publisherPrivKey: "",
+                attestorPrivKey: "",
+                alicePrivKey: "",
+                bobPrivKey: ""
+            };
         }
-        while (buyerPrivKey.length < 64) {
-            buyerPrivKey = "0" + buyerPrivKey;
-        }
-        while (buyer2PrivKey.length < 64) {
-            buyer2PrivKey = "0" + buyer2PrivKey;
-        }
-        const publisherPubKey = rchainToolkit.utils.publicKeyFromPrivateKey(publisherPrivKey);
-        const attestorPubKey = rchainToolkit.utils.publicKeyFromPrivateKey(attestorPrivKey);
-        const buyerPubKey = rchainToolkit.utils.publicKeyFromPrivateKey(buyerPrivKey);
-        const buyer2PubKey = rchainToolkit.utils.publicKeyFromPrivateKey(buyer2PrivKey);
-        const publisherRevAddr = rchainToolkit.utils.revAddressFromPublicKey(publisherPubKey);
-        const attestorRevAddr = rchainToolkit.utils.revAddressFromPublicKey(attestorPubKey);
-        const buyerRevAddr = rchainToolkit.utils.revAddressFromPublicKey(buyerPubKey);
-        const buyer2RevAddr = rchainToolkit.utils.revAddressFromPublicKey(buyer2PubKey);
-        console.info("publisher: " + publisherRevAddr);
-        console.info("attestor: " + attestorRevAddr);
-        console.info("buyer: " + buyerRevAddr);
-        console.info("buye2r: " + buyer2RevAddr);
-        const fundingPromise1 = fundWallet(escrowRevAddr, publisherRevAddr, 10000000000);
-        const fundingPromise2 = fundWallet(escrowRevAddr, attestorRevAddr, 10000000000);
-        const fundingPromise3 = fundWallet(escrowRevAddr, buyerRevAddr, 10000000000);
-        const fundingPromise4 = fundWallet(escrowRevAddr, buyer2RevAddr, 10000000000);
-        await Promise.all([fundingPromise1, fundingPromise2, fundingPromise3, fundingPromise4]);
-        const masterRegistryUri = await deployMaster(publisherPrivKey);
-        console.info("masterRegistryUri: " + masterRegistryUri);
-        const boxPromise1 = deployBox(publisherPrivKey, publisherPubKey, masterRegistryUri, "publisher");
-        const boxPromise2 = deployBox(attestorPrivKey, attestorPubKey, masterRegistryUri, "attestor");
-        const boxPromise3 = deployBox(buyerPrivKey, buyerPubKey, masterRegistryUri, "buyer");
-        const boxPromise4 = deployBox(buyer2PrivKey, buyer2PubKey, masterRegistryUri, "buyer2");
-        await Promise.all([boxPromise1, boxPromise2, boxPromise3, boxPromise4]);
-        const deployPromise1 = deployContract(publisherPrivKey, masterRegistryUri, false, "store", "publisher", undefined);
-        const deployPromise2 = deployContract(publisherPrivKey, masterRegistryUri, false, "public_store", "publisher", undefined);
-        await Promise.all([deployPromise1, deployPromise2]);
-        await createPurse(publisherPrivKey, masterRegistryUri, "store", "publisher", "0", "0", 100000000, 1);
-        await checkPursesInBox(masterRegistryUri, 'publisher', 'store', ['0']);
-        return {
-            masterRegistryUri: masterRegistryUri,
-            publisherPrivKey: publisherPrivKey,
-            attestorPrivKey: attestorPrivKey,
-            alicePrivKey: buyerPrivKey,
-            bobPrivKey: buyer2PrivKey
-        };
     }
 }
 exports.RChainProvider = RChainProvider;

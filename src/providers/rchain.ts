@@ -545,20 +545,6 @@ export class RChainProvider implements Provider<Demo> {
         let attestorPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
         let buyerPrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
         let buyer2PrivKey = secp256k1.genKeyPair().getPrivate().toString('hex');
-
-        while (publisherPrivKey.length < 64) {
-          publisherPrivKey = "0" + publisherPrivKey;
-        }
-        while (attestorPrivKey.length < 64) {
-          attestorPrivKey = "0" + attestorPrivKey;
-        }
-        while (buyerPrivKey.length < 64) {
-          buyerPrivKey = "0" + buyerPrivKey;
-        }
-        while (buyer2PrivKey.length < 64) {
-          buyer2PrivKey = "0" + buyer2PrivKey;
-        }
-         
       
         const publisherPubKey = rchainToolkit.utils.publicKeyFromPrivateKey(publisherPrivKey);
         const attestorPubKey = rchainToolkit.utils.publicKeyFromPrivateKey(attestorPrivKey);
@@ -608,6 +594,18 @@ export class RChainProvider implements Provider<Demo> {
           ['0']
         );
 
+        while (publisherPrivKey.length < 64) {
+          publisherPrivKey = "0" + publisherPrivKey;
+        }
+        while (attestorPrivKey.length < 64) {
+          attestorPrivKey = "0" + attestorPrivKey;
+        }
+        while (buyerPrivKey.length < 64) {
+          buyerPrivKey = "0" + buyerPrivKey;
+        }
+        while (buyer2PrivKey.length < 64) {
+          buyer2PrivKey = "0" + buyer2PrivKey;
+        }
 
         return {
           masterRegistryUri: masterRegistryUri,
